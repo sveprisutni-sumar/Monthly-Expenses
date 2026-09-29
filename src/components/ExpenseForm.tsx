@@ -18,13 +18,23 @@ interface Props {
   imageUrl?: string | null;
   initialError?: string | null;
   notice?: string | null;
+  merchantPlaceholder?: string;
   saveLabel: string;
   onSave: (values: ExpenseFormValues) => void | Promise<void>;
   onCancel: () => void;
 }
 
 /** Editable merchant/date/items/category form shared by the scanner review step and the edit dialog. */
-export function ExpenseForm({ initial, imageUrl, initialError, notice, saveLabel, onSave, onCancel }: Props) {
+export function ExpenseForm({
+  initial,
+  imageUrl,
+  initialError,
+  notice,
+  merchantPlaceholder,
+  saveLabel,
+  onSave,
+  onCancel,
+}: Props) {
   const categories = useLiveQuery(() => db.categories.toArray(), []) ?? [];
   const [merchant, setMerchant] = useState(initial.merchant);
   const [date, setDate] = useState(initial.date);
@@ -55,7 +65,7 @@ export function ExpenseForm({ initial, imageUrl, initialError, notice, saveLabel
         <div className="review-fields">
           <label>
             Merchant
-            <input value={merchant} onChange={(e) => setMerchant(e.target.value)} />
+            <input value={merchant} placeholder={merchantPlaceholder} onChange={(e) => setMerchant(e.target.value)} />
           </label>
           <label>
             Date
@@ -101,7 +111,8 @@ export function ExpenseForm({ initial, imageUrl, initialError, notice, saveLabel
                   type="number"
                   step="1"
                   min="0"
-                  value={item.price}
+                  value={item.price || ''}
+                  placeholder="0"
                   onChange={(e) => updateItem(item.id, { price: parseFloat(e.target.value) || 0 })}
                   onBlur={(e) => updateItem(item.id, { price: roundDinars(parseFloat(e.target.value) || 0) })}
                 />

@@ -334,6 +334,12 @@ input {
 }
 
 /* Receipt scanner */
+.panel-title {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0 0 14px;
+}
+
 .scanner {
   background: var(--surface);
   border: 1px solid var(--border);
@@ -605,6 +611,33 @@ input {
 
 .category-name {
   flex: 1;
+}
+
+.category-list-item-editing {
+  background: var(--surface-2);
+  border-radius: 8px;
+  padding: 10px;
+}
+
+.category-edit-row {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.category-edit-row input {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px 10px;
+  background: var(--surface);
+  color: var(--text);
+}
+
+.category-edit-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
 }
 
 @media (max-width: 640px) {

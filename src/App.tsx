@@ -1,14 +1,16 @@
 import { useEffect, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, ensureSeedData } from './db';
-import { monthKey as currentMonthKey, isInMonth } from './lib/format';
+import { monthKey as currentMonthKey, isInMonth, monthLabel } from './lib/format';
+import { pickXlsxSaveTarget, writeToTarget } from './lib/saveFile';
 import { MonthSelector } from './components/MonthSelector';
 import { SummaryPanel } from './components/SummaryPanel';
 import { ExpenseBoard } from './components/ExpenseBoard';
 import { ReceiptScanner } from './components/ReceiptScanner';
+import { ManualExpense } from './components/ManualExpense';
 import { CategoryManager } from './components/CategoryManager';
 
-type Tab = 'board' | 'scan';
+type Tab = 'board' | 'scan' | 'manual';
 
 function App() {
   const [ready, setReady] = useState(false);
@@ -28,10 +30,15 @@ function App() {
   if (!ready) return null;
 
   async function handleExport() {
+    // Open the Save As dialog first: browsers only allow it right after the click.
+    const target = await pickXlsxSaveTarget(`expenses-${monthLabel(monthKey).replace(/\s+/g, '-')}.xlsx`);
+    if (!target) return;
     setExporting(true);
     try {
-      const { exportMonthToXlsx } = await import('./lib/exportXlsx');
-      await exportMonthToXlsx(monthKey, monthExpenses, categories);
+      const { buildMonthXlsx } = await import('./lib/exportXlsx');
+      await writeToTarget(target, await buildMonthXlsx(monthExpenses, categories));
+    } catch (err) {
+      alert(`Export failed: ${err instanceof Error ? err.message : String(err)}`);
     } finally {
       setExporting(false);
     }
@@ -51,12 +58,15 @@ function App() {
         <button className={`tab-btn ${tab === 'scan' ? 'active' : ''}`} onClick={() => setTab('scan')}>
           Scan Receipt
         </button>
+        <button className={`tab-btn ${tab === 'manual' ? 'active' : ''}`} onClick={() => setTab('manual')}>
+          Add Manually
+        </button>
         <button
           className="tab-btn secondary"
           onClick={handleExport}
           disabled={exporting || monthExpenses.length === 0}
         >
-          {exporting ? 'Exporting…' : 'Export XLSX'}
+          {exporting ? 'Exporting…' : 'Export XLSX…'}
         </button>
         <button className="tab-btn" onClick={() => setShowCategories(true)}>
           Manage Categories
@@ -71,6 +81,7 @@ function App() {
           </>
         )}
         {tab === 'scan' && <ReceiptScanner onSaved={() => setTab('board')} />}
+        {tab === 'manual' && <ManualExpense onDone={() => setTab('board')} />}
       </main>
 
       {showCategories && <CategoryManager onClose={() => setShowCategories(false)} />}

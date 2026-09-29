@@ -1,6 +1,6 @@
 import ExcelJS from 'exceljs';
 import type { Category, Expense } from '../types';
-import { monthLabel } from './format';
+import { XLSX_MIME } from './saveFile';
 
 const CURRENCY_FMT = '#,##0 "RSD"';
 
@@ -9,7 +9,8 @@ function categoryName(categories: Category[], id: string | null): string {
   return categories.find((c) => c.id === id)?.name ?? 'Unassigned';
 }
 
-export async function exportMonthToXlsx(monthKey: string, expenses: Expense[], categories: Category[]) {
+/** Builds the month's workbook (Summary, Expenses, Items sheets) as an .xlsx blob. */
+export async function buildMonthXlsx(expenses: Expense[], categories: Category[]): Promise<Blob> {
   const wb = new ExcelJS.Workbook();
   wb.created = new Date();
 
@@ -68,15 +69,5 @@ export async function exportMonthToXlsx(monthKey: string, expenses: Expense[], c
   }
 
   const buffer = await wb.xlsx.writeBuffer();
-  const blob = new Blob([buffer], {
-    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-  });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = `expenses-${monthLabel(monthKey).replace(/\s+/g, '-')}.xlsx`;
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-  URL.revokeObjectURL(url);
+  return new Blob([buffer], { type: XLSX_MIME });
 }
